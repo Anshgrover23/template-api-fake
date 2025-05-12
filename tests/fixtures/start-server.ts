@@ -5,7 +5,7 @@ import {
 import { Request as EdgeRuntimeRequest } from "@edge-runtime/primitives"
 import { join } from "node:path"
 import os from "node:os"
-import type { Middleware } from "winterspec"
+import type { Middleware } from "winterspec/middleware"
 import { createDatabase } from "lib/db/db-client"
 
 export const startServer = async ({
