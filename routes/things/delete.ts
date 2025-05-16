@@ -3,51 +3,29 @@ import { z } from "zod"
 import type { DatabaseSchema } from "lib/db/schema"
 
 export default withRouteSpec({
-  methods: ["POST"],
-  formData: z.object({
+  methods: ["DELETE", "POST"],
+  urlEncodedFormData: z.object({
     thing_id: z.string(),
   }),
   jsonResponse: z.object({
     ok: z.boolean(),
   }),
 })(async (req, ctx) => {
-  let thing_id = ""
+  const formData = req.urlEncodedFormData
+  const thing_id = formData.thing_id
 
-  // Try to parse form data first
-  try {
-    const formData = await req.formData()
-    thing_id = formData.get("thing_id")?.toString() || ""
-  } catch {
-    // If not form data, try JSON
-    try {
-      const data = await req.json()
-      thing_id = data.thing_id
-    } catch (error) {
-      return new Response(JSON.stringify({ error: "Invalid request format" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      })
-    }
+  // Check if the thing exists
+  const things = ctx.db.getState().things
+  const thing = things.find((t) => t.thing_id === thing_id)
+
+  if (!thing) {
+    return new Response("Thing not found", { status: 404 })
   }
 
-  // Validate required fields
-  if (!thing_id) {
-    return new Response(JSON.stringify({ error: "Thing ID is required" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    })
-  }
-
-  // Get the current things and filter out the one with the given ID
-  const currentThings = ctx.db.things
-  const updatedThings = currentThings.filter(
-    (thing) => thing.thing_id !== thing_id,
-  )
-
-  // Update the state directly
+  // Delete the thing
   ctx.db.setState({
-    things: updatedThings,
-    idCounter: ctx.db.getState().idCounter,
+    ...ctx.db.getState(),
+    things: ctx.db.getState().things.filter((t) => t.thing_id !== thing_id),
   })
 
   // Check if the request wants HTML response (from a form) or JSON response (from fetch)

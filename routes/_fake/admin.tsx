@@ -2,10 +2,16 @@ import { withRouteSpec } from "lib/middleware/with-winter-spec"
 import type { Thing } from "lib/db/schema"
 import React from "react"
 import { Table } from "lib/admin/Table"
+import { z } from "zod"
 
-// Admin page component to display thing resources
-const AdminPage: React.FC<{ things: Thing[] }> = ({ things }) => {
-  return (
+export default withRouteSpec({
+  methods: ["GET"],
+})((req, ctx) => {
+  // Get things from the database
+  const things = ctx.db.things
+
+  // Render the admin page directly
+  return ctx.react(
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Thing Resources Admin</h1>
 
@@ -46,17 +52,7 @@ const AdminPage: React.FC<{ things: Thing[] }> = ({ things }) => {
           rows={things.map((thing) => ({
             ...thing,
             actions: (
-              <form
-                action="/things/delete"
-                method="POST"
-                onSubmit={(e) => {
-                  if (
-                    !confirm(`Are you sure you want to delete "${thing.name}"?`)
-                  ) {
-                    e.preventDefault()
-                  }
-                }}
-              >
+              <form action="/things/delete" method="POST">
                 <input type="hidden" name="thing_id" value={thing.thing_id} />
                 <button
                   type="submit"
@@ -69,16 +65,6 @@ const AdminPage: React.FC<{ things: Thing[] }> = ({ things }) => {
           }))}
         />
       </div>
-    </div>
+    </div>,
   )
-}
-
-export default withRouteSpec({
-  methods: ["GET"],
-})((req, ctx) => {
-  // Get things from the database
-  const things = ctx.db.things
-
-  // Render the admin page using the React middleware
-  return ctx.react(<AdminPage things={things} />)
 })
