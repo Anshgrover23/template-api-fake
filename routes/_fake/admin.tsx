@@ -1,6 +1,7 @@
 import { withRouteSpec } from "lib/middleware/with-winter-spec"
 import type { Thing } from "lib/db/schema"
 import React from "react"
+import { Table } from "lib/admin/Table"
 
 // Admin page component to display thing resources
 const AdminPage: React.FC<{ things: Thing[] }> = ({ things }) => {
@@ -94,92 +95,65 @@ const AdminPage: React.FC<{ things: Thing[] }> = ({ things }) => {
       </div>
 
       {/* Display thing resources */}
-      <div>
-        <h2>Thing Resources</h2>
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Thing Resources</h2>
+          <span className="text-sm text-gray-500">{things.length} items</span>
+        </div>
         {things.length === 0 ? (
-          <p className="text-gray-500 italic">No things found</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-            {things.map((thing) => (
-              <div
-                key={thing.thing_id}
-                className="border border-gray-300 rounded p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="font-bold text-lg">{thing.name}</div>
-                <div className="text-gray-700">{thing.description}</div>
-                <div className="text-gray-500 text-xs mt-2">
-                  ID: {thing.thing_id}
-                </div>
-                <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-200">
-                  <span className="text-xs text-gray-500">Actions:</span>
-                  <form
-                    action="/things/delete"
-                    method="POST"
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      console.log(
-                        `Attempting to delete thing with ID: ${thing.thing_id}`,
-                      )
-
-                      if (
-                        confirm(
-                          `Are you sure you want to delete "${thing.name}"?`,
-                        )
-                      ) {
-                        console.log("Confirmed deletion, sending request...")
-
-                        const formData = new FormData()
-                        formData.append("thing_id", thing.thing_id)
-
-                        fetch("/things/delete", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({ thing_id: thing.thing_id }),
-                        })
-                          .then((response) => {
-                            console.log(
-                              "Delete response status:",
-                              response.status,
-                            )
-                            if (!response.ok) {
-                              throw new Error(
-                                `HTTP error! status: ${response.status}`,
-                              )
-                            }
-                            return response.json()
-                          })
-                          .then((data) => {
-                            console.log("Delete response data:", data)
-                            // Redirect to admin page to show the updated list
-                            window.location.href = "/_fake/admin"
-                          })
-                          .catch((error) => {
-                            console.error("Error deleting thing:", error)
-                            alert(`Error deleting thing: ${error.message}`)
-                          })
-                      } else {
-                        console.log("Deletion cancelled by user")
-                      }
-                    }}
-                  >
-                    <input
-                      type="hidden"
-                      name="thing_id"
-                      value={thing.thing_id}
-                    />
-                    <button
-                      type="submit"
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded"
-                    >
-                      Delete
-                    </button>
-                  </form>
-                </div>
-              </div>
-            ))}
+          <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-gray-600 mb-2">No things found</p>
+            <p className="text-sm text-gray-500">
+              Create a new thing using the form above
+            </p>
           </div>
+        ) : (
+          <Table
+            rows={things.map((thing) => ({
+              ...thing,
+              actions: (
+                <form
+                  action="/things/delete"
+                  method="POST"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    if (
+                      confirm(
+                        `Are you sure you want to delete "${thing.name}"?`,
+                      )
+                    ) {
+                      fetch("/things/delete", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ thing_id: thing.thing_id }),
+                      })
+                        .then((response) => {
+                          if (!response.ok)
+                            throw new Error(
+                              `HTTP error! status: ${response.status}`,
+                            )
+                          return response.json()
+                        })
+                        .then(() => {
+                          window.location.href = "/_fake/admin"
+                        })
+                        .catch((error) => {
+                          alert(`Error deleting thing: ${error.message}`)
+                        })
+                    }
+                  }}
+                >
+                  <input type="hidden" name="thing_id" value={thing.thing_id} />
+                  <button
+                    type="submit"
+                    className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Delete
+                  </button>
+                </form>
+              ),
+            }))}
+          />
         )}
       </div>
     </div>

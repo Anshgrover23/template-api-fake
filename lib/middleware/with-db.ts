@@ -11,10 +11,13 @@ export const withDb: Middleware<
     db: DbClient
   }
 > = async (req, ctx, next) => {
-  if (!dbInstance) {
-    dbInstance = createDatabase()
+  // Only set db if not already provided by another middleware
+  if (!ctx.db) {
+    if (!dbInstance) {
+      dbInstance = createDatabase()
+    }
+    ctx.db = dbInstance
   }
 
-  ctx.db = dbInstance
   return next(req, ctx)
 }
