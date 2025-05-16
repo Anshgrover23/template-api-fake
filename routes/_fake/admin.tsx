@@ -96,65 +96,51 @@ const AdminPage: React.FC<{ things: Thing[] }> = ({ things }) => {
 
       {/* Display thing resources */}
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Thing Resources</h2>
-          <span className="text-sm text-gray-500">{things.length} items</span>
-        </div>
-        {things.length === 0 ? (
-          <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-gray-600 mb-2">No things found</p>
-            <p className="text-sm text-gray-500">
-              Create a new thing using the form above
-            </p>
-          </div>
-        ) : (
-          <Table
-            rows={things.map((thing) => ({
-              ...thing,
-              actions: (
-                <form
-                  action="/things/delete"
-                  method="POST"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    if (
-                      confirm(
-                        `Are you sure you want to delete "${thing.name}"?`,
-                      )
-                    ) {
-                      fetch("/things/delete", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ thing_id: thing.thing_id }),
+        <h2 className="text-xl font-bold mb-4">Thing Resources</h2>
+        <Table
+          rows={things.map((thing) => ({
+            ...thing,
+            actions: (
+              <form
+                action="/things/delete"
+                method="POST"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (
+                    confirm(`Are you sure you want to delete "${thing.name}"?`)
+                  ) {
+                    fetch("/things/delete", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ thing_id: thing.thing_id }),
+                    })
+                      .then((response) => {
+                        if (!response.ok)
+                          throw new Error(
+                            `HTTP error! status: ${response.status}`,
+                          )
+                        return response.json()
                       })
-                        .then((response) => {
-                          if (!response.ok)
-                            throw new Error(
-                              `HTTP error! status: ${response.status}`,
-                            )
-                          return response.json()
-                        })
-                        .then(() => {
-                          window.location.href = "/_fake/admin"
-                        })
-                        .catch((error) => {
-                          alert(`Error deleting thing: ${error.message}`)
-                        })
-                    }
-                  }}
+                      .then(() => {
+                        window.location.href = "/_fake/admin"
+                      })
+                      .catch((error) => {
+                        alert(`Error deleting thing: ${error.message}`)
+                      })
+                  }
+                }}
+              >
+                <input type="hidden" name="thing_id" value={thing.thing_id} />
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
-                  <input type="hidden" name="thing_id" value={thing.thing_id} />
-                  <button
-                    type="submit"
-                    className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    Delete
-                  </button>
-                </form>
-              ),
-            }))}
-          />
-        )}
+                  Delete
+                </button>
+              </form>
+            ),
+          }))}
+        />
       </div>
     </div>
   )
