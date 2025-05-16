@@ -1,20 +1,19 @@
 import { withRouteSpec } from "lib/middleware/with-winter-spec"
 import { z } from "zod"
+import type { DatabaseSchema } from "lib/db/schema"
 
 export default withRouteSpec({
   methods: ["POST"],
   jsonBody: z
     .object({
-      name: z.string(),
-      description: z.string(),
+      thing_id: z.string(),
     })
     .optional(),
   jsonResponse: z.object({
     ok: z.boolean(),
   }),
 })(async (req, ctx) => {
-  let name = ""
-  let description = ""
+  let thing_id = ""
 
   // Check content type to determine how to parse the request
   const contentType = req.headers.get("Content-Type") || ""
@@ -22,22 +21,19 @@ export default withRouteSpec({
   if (contentType.includes("application/json")) {
     // Handle JSON request
     const data = await req.json()
-    name = data.name
-    description = data.description
+    thing_id = data.thing_id
   } else if (
     contentType.includes("application/x-www-form-urlencoded") ||
     contentType.includes("multipart/form-data")
   ) {
     // Handle form data
     const formData = await req.formData()
-    name = formData.get("name")?.toString() || ""
-    description = formData.get("description")?.toString() || ""
+    thing_id = formData.get("thing_id")?.toString() || ""
   } else {
     // Default fallback - try to parse as JSON
     try {
       const data = await req.json()
-      name = data.name
-      description = data.description
+      thing_id = data.thing_id
     } catch (error) {
       return new Response(JSON.stringify({ error: "Invalid request format" }), {
         status: 400,
@@ -47,20 +43,23 @@ export default withRouteSpec({
   }
 
   // Validate required fields
-  if (!name || !description) {
-    return new Response(
-      JSON.stringify({ error: "Name and description are required" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      },
-    )
+  if (!thing_id) {
+    return new Response(JSON.stringify({ error: "Thing ID is required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    })
   }
 
-  // Add the thing to the database
-  ctx.db.addThing({
-    name,
-    description,
+  // Get the current things and filter out the one with the given ID
+  const currentThings = ctx.db.things
+  const updatedThings = currentThings.filter(
+    (thing) => thing.thing_id !== thing_id,
+  )
+
+  // Update the state directly
+  ctx.db.setState({
+    things: updatedThings,
+    idCounter: ctx.db.getState().idCounter,
   })
 
   // Check if the request wants HTML response (from a form) or JSON response (from fetch)
