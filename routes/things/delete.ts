@@ -11,8 +11,7 @@ export default withRouteSpec({
     ok: z.boolean(),
   }),
 })(async (req, ctx) => {
-  const formData = req.urlEncodedFormData
-  const thing_id = formData.thing_id
+  const { thing_id } = req.urlEncodedFormData
 
   // Delete the thing
   ctx.db.setState({
