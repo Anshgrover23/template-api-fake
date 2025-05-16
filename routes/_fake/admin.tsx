@@ -12,62 +12,7 @@ const AdminPage: React.FC<{ things: Thing[] }> = ({ things }) => {
       {/* Create new thing form */}
       <div className="mb-6">
         <h2>Create New Thing</h2>
-        <form
-          action="/things/create"
-          method="POST"
-          className="w-full max-w-md"
-          onSubmit={(e) => {
-            // Use JavaScript for enhanced experience, but allow traditional form submission as fallback
-            e.preventDefault()
-            console.log("Form submitted")
-
-            const form = e.currentTarget
-            const nameInput = form.elements.namedItem(
-              "name",
-            ) as HTMLInputElement
-            const descriptionInput = form.elements.namedItem(
-              "description",
-            ) as HTMLInputElement
-
-            if (!nameInput || !descriptionInput) {
-              console.error("Form elements not found")
-              return
-            }
-
-            const data = {
-              name: nameInput.value,
-              description: descriptionInput.value,
-            }
-
-            console.log("Submitting data:", data)
-
-            fetch("/things/create", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(data),
-            })
-              .then((response) => {
-                console.log("Create response status:", response.status)
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`)
-                }
-                return response.json()
-              })
-              .then((responseData) => {
-                console.log("Create response data:", responseData)
-                // Reset form fields
-                form.reset()
-                // Reload the page to show the new thing
-                window.location.href = "/_fake/admin"
-              })
-              .catch((error) => {
-                console.error("Error creating thing:", error)
-                alert(`Error creating thing: ${error.message}`)
-              })
-          }}
-        >
+        <form action="/things/create" method="POST" className="w-full max-w-md">
           <div className="mb-2">
             <label className="block text-gray-700 text-sm font-bold mb-1">
               Name:
@@ -105,35 +50,17 @@ const AdminPage: React.FC<{ things: Thing[] }> = ({ things }) => {
                 action="/things/delete"
                 method="POST"
                 onSubmit={(e) => {
-                  e.preventDefault()
                   if (
-                    confirm(`Are you sure you want to delete "${thing.name}"?`)
+                    !confirm(`Are you sure you want to delete "${thing.name}"?`)
                   ) {
-                    fetch("/things/delete", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ thing_id: thing.thing_id }),
-                    })
-                      .then((response) => {
-                        if (!response.ok)
-                          throw new Error(
-                            `HTTP error! status: ${response.status}`,
-                          )
-                        return response.json()
-                      })
-                      .then(() => {
-                        window.location.href = "/_fake/admin"
-                      })
-                      .catch((error) => {
-                        alert(`Error deleting thing: ${error.message}`)
-                      })
+                    e.preventDefault()
                   }
                 }}
               >
                 <input type="hidden" name="thing_id" value={thing.thing_id} />
                 <button
                   type="submit"
-                  className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="text-xs font-medium text-white bg-red-600 hover:bg-red-700 px-4 py-1 rounded shadow-none"
                 >
                   Delete
                 </button>

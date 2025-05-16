@@ -4,33 +4,21 @@ import type { DatabaseSchema } from "lib/db/schema"
 
 export default withRouteSpec({
   methods: ["POST"],
-  jsonBody: z
-    .object({
-      thing_id: z.string(),
-    })
-    .optional(),
+  formData: z.object({
+    thing_id: z.string(),
+  }),
   jsonResponse: z.object({
     ok: z.boolean(),
   }),
 })(async (req, ctx) => {
   let thing_id = ""
 
-  // Check content type to determine how to parse the request
-  const contentType = req.headers.get("Content-Type") || ""
-
-  if (contentType.includes("application/json")) {
-    // Handle JSON request
-    const data = await req.json()
-    thing_id = data.thing_id
-  } else if (
-    contentType.includes("application/x-www-form-urlencoded") ||
-    contentType.includes("multipart/form-data")
-  ) {
-    // Handle form data
+  // Try to parse form data first
+  try {
     const formData = await req.formData()
     thing_id = formData.get("thing_id")?.toString() || ""
-  } else {
-    // Default fallback - try to parse as JSON
+  } catch {
+    // If not form data, try JSON
     try {
       const data = await req.json()
       thing_id = data.thing_id
